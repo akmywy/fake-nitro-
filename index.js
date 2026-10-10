@@ -167,6 +167,7 @@ exports.default = {
     safe("badges-hook", () => {
       const myId = findByStoreName("UserStore").getCurrentUser().id;
       const mod = findByName("useBadges", false);
+      console.log("[FakeNitro+] useBadges:", !!mod, "badges in CONFIG:", CONFIG.badges.length);
       if (mod?.default) {
         patches.push(
           after("default", mod, ([user], res) => {
@@ -183,6 +184,7 @@ exports.default = {
         );
       }
       const Assets = findByProps("getBadgeAsset");
+      console.log("[FakeNitro+] getBadgeAsset:", !!Assets);
       if (Assets) {
         patches.push(
           instead("getBadgeAsset", Assets, (args, orig) =>
@@ -210,11 +212,30 @@ exports.default = {
     });
 
     // 10) Fake deafen: mnin t-mute, l-nass kaychoufok deafen w nta kat-sme3
+    safe("fake-deafen-ws", () => {
+      const origSend = WebSocket.prototype.send;
+      WebSocket.prototype.send = function (data) {
+        try {
+          if (CONFIG.fakeDeafen && typeof data === "string" && data.includes('"op":4')) {
+            const j = JSON.parse(data);
+            if (j.op === 4 && j.d && j.d.self_mute) {
+              j.d.self_deaf = true;
+              data = JSON.stringify(j);
+              console.log("[FakeNitro+] fake deafen sent");
+            }
+          }
+        } catch (e) {}
+        return origSend.call(this, data);
+      };
+      patches.push(() => { WebSocket.prototype.send = origSend; });
+    });
+
     safe("fake-deafen", () => {
       const targets = [
         findByProps("voiceStateUpdate"),
         findByProps("updateVoiceState"),
       ].filter(Boolean);
+      console.log("[FakeNitro+] voice modules found:", targets.length);
       for (const t of targets) {
         const fn = t.voiceStateUpdate ? "voiceStateUpdate" : "updateVoiceState";
         patches.push(
