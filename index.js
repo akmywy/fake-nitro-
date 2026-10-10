@@ -1,5 +1,8 @@
-import { findByProps, findByStoreName } from "@vendetta/metro";
-import { before, after, instead } from "@vendetta/patcher";
+(function(exports, metro, patcher){
+"use strict";
+const { findByProps, findByStoreName } = metro;
+const { before, after, instead } = patcher;
+const exports_ = exports;
 
 const patches = [];
 const safe = (name, fn) => {
@@ -19,7 +22,7 @@ const ranges = {
   script: [0x1d4d0, 0x1d4ea, 0x1d7ce],
   mono: [0x1d670, 0x1d68a, 0x1d7f6],
 };
-export const styleText = (text, style = CONFIG.nicknameStyle) => {
+const styleText = (text, style = CONFIG.nicknameStyle) => {
   const r = ranges[style];
   if (!r) return text;
   return [...text]
@@ -33,7 +36,7 @@ export const styleText = (text, style = CONFIG.nicknameStyle) => {
     .join("");
 };
 
-export default {
+exports.default = {
   onLoad() {
     // 1) Emojis: bddel emoji custom l link f send
     safe("emoji-send", () => {
@@ -141,3 +144,5 @@ export default {
     patches.length = 0;
   },
 };
+return exports;
+})({}, vendetta.metro, vendetta.patcher);

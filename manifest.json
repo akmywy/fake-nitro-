@@ -1,7 +1,14 @@
 {
   "name": "FakeNitro+",
   "description": "Emojis, soundboard, profile theme and nickname styles from all servers (client-side)",
-  "authors": [{ "name": "you" }],
+  "authors": [
+    {
+      "name": "you"
+    }
+  ],
   "main": "index.js",
-  "vendetta": { "icon": "ic_emoji" }
+  "vendetta": {
+    "icon": "ic_emoji"
+  },
+  "hash": "1"
 }
