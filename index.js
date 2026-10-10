@@ -15,6 +15,11 @@ const CONFIG = {
   nicknameStyle: "bold", // "bold" | "script" | "mono" | "none"
   memberSince: "2015-05-15T00:00:00Z",
   fakeDeafen: true,
+  // Sound mnin nta tdkhl l voice (kolchi ysm3o, 3ra soundboard dyal Discord)
+  joinSound: true,
+  joinSoundId: "",      // ID dyal sound li t-uploadit f soundboard
+  joinSoundGuildId: "", // ID dyal server fin kayn sound
+  joinSoundDelay: 1500, // ms bach t-connecta l voice 9bel
   // 7ot hna badges: icon = URL dyal tswira
   replaceBadges: true, // true = kay-khbbi l-badges l-9dom (ghir nta li kat-chof)
   // icon = hash dyal badge mn CDN dyal Discord
@@ -247,6 +252,34 @@ exports.default = {
           })
         );
       }
+    });
+
+    // 11) Sound mnin nta tdkhl l voice: kaytsift soundboard (kolchi ysm3o)
+    safe("join-sound", () => {
+      if (!CONFIG.joinSound || !CONFIG.joinSoundId) return;
+      const FluxDispatcher = findByProps("subscribe", "dispatch");
+      const UserStore = findByStoreName("UserStore");
+      const RestAPI = findByProps("getAPIBaseURL", "get");
+      if (!FluxDispatcher || !RestAPI) return console.log("[FakeNitro+] join-sound: modules missing");
+      let last = null;
+      const handler = ({ voiceStates }) => {
+        const myId = UserStore.getCurrentUser()?.id;
+        for (const v of voiceStates || []) {
+          if (v.userId !== myId) continue;
+          const ch = v.channelId || null;
+          if (ch && ch !== last) {
+            setTimeout(() => {
+              RestAPI.post({
+                url: `/channels/${ch}/send-soundboard-sound`,
+                body: { sound_id: CONFIG.joinSoundId, source_guild_id: CONFIG.joinSoundGuildId || v.guildId },
+              }).catch((e) => console.log("[FakeNitro+] join-sound error:", e?.body || e));
+            }, CONFIG.joinSoundDelay);
+          }
+          last = ch;
+        }
+      };
+      FluxDispatcher.subscribe("VOICE_STATE_UPDATES", handler);
+      patches.push(() => FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", handler));
     });
   },
 
