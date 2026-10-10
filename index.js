@@ -1,6 +1,6 @@
 (function(exports, metro, patcher){
 "use strict";
-const { findByProps, findByStoreName } = metro;
+const { findByProps, findByStoreName, findByName } = metro;
 const { before, after, instead } = patcher;
 const exports_ = exports;
 
@@ -161,6 +161,37 @@ exports.default = {
           return profile;
         })
       );
+    });
+
+    // 8b) Badges: patch useBadges (hna kayt-rsem f mobile) + asset URL
+    safe("badges-hook", () => {
+      const myId = findByStoreName("UserStore").getCurrentUser().id;
+      const mod = findByName("useBadges", false);
+      if (mod?.default) {
+        patches.push(
+          after("default", mod, ([user], res) => {
+            if (user?.userId === myId || user?.id === myId) {
+              const extra = CONFIG.badges.map((b, i) => ({
+                id: "fake_" + i,
+                description: b.description,
+                icon: b.icon,
+              }));
+              return [...(res || []), ...extra];
+            }
+            return res;
+          })
+        );
+      }
+      const Assets = findByProps("getBadgeAsset");
+      if (Assets) {
+        patches.push(
+          instead("getBadgeAsset", Assets, (args, orig) =>
+            typeof args[0] === "string" && args[0].startsWith("http")
+              ? args[0]
+              : orig(...args)
+          )
+        );
+      }
     });
 
     // 9) Member Since fake (2015)
