@@ -16,12 +16,8 @@ const CONFIG = {
   memberSince: "2015-05-15T00:00:00Z",
   fakeDeafen: true,
   // 7ot hna badges: icon = URL dyal tswira
-  replaceBadges: true, // true = kay-khbbi l-badges l-9dom w kay-affichi ghir l-jdad
-  badges: [
-    { description: "Speedy", icon: "https://akmywy.github.io/fake-nitro-/badges/b0.png" },
-    { description: "Spiral", icon: "https://akmywy.github.io/fake-nitro-/badges/b1.png" },
-    { description: "Helmet", icon: "https://akmywy.github.io/fake-nitro-/badges/b2.png" },
-  ],
+  replaceBadges: false,
+  badges: [],
 };
 
 // ---- Nickname style (unicode, kayban l kolchi) ----
