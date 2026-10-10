@@ -16,8 +16,13 @@ const CONFIG = {
   memberSince: "2015-05-15T00:00:00Z",
   fakeDeafen: true,
   // 7ot hna badges: icon = URL dyal tswira
-  replaceBadges: false,
-  badges: [],
+  replaceBadges: true, // true = kay-khbbi l-badges l-9dom (ghir nta li kat-chof)
+  // icon = hash dyal badge mn CDN dyal Discord
+  badges: [
+    { id: "local_nitro", description: "Subscriber since 2020", icon: "2ba85e8026a8614b640c2837bcdfe21b" },
+    { id: "local_nitro_6y", description: "Subscribed for 6 years", icon: "5b154df19c53dce2af92c9b61e6be5e2" },
+    { id: "local_early", description: "Early Supporter", icon: "7060786766c9c840eb3019e725d2b358" },
+  ],
 };
 
 // ---- Nickname style (unicode, kayban l kolchi) ----
@@ -135,7 +140,7 @@ exports.default = {
         after("getUserProfile", Profiles, ([id], profile) => {
           if (id === myId && profile) {
             const extra = CONFIG.badges.map((b, i) => ({
-              id: "fake_" + i,
+              id: b.id || "fake_" + i,
               description: b.description,
               icon: b.icon, // hash dyal Discord wla URL kaml
             }));
@@ -144,6 +149,17 @@ exports.default = {
           return profile;
         })
       );
+    });
+
+    // 8a) Hyyed l-flags dyal l-badges l-9dom (local)
+    safe("hide-flags", () => {
+      if (!CONFIG.replaceBadges) return;
+      const me = findByStoreName("UserStore").getCurrentUser();
+      ["publicFlags", "flags", "public_flags"].forEach((k) => {
+        try {
+          if (k in me) Object.defineProperty(me, k, { configurable: true, get: () => 0 });
+        } catch (e) {}
+      });
     });
 
     // 8b) Badges: patch useBadges (hna kayt-rsem f mobile) + asset URL
@@ -156,7 +172,7 @@ exports.default = {
           after("default", mod, ([user], res) => {
             if (user?.userId === myId || user?.id === myId) {
               const extra = CONFIG.badges.map((b, i) => ({
-                id: "fake_" + i,
+                id: b.id || "fake_" + i,
                 description: b.description,
                 icon: b.icon,
               }));
