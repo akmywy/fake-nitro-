@@ -138,7 +138,7 @@ exports.default = {
       const myId = findByStoreName("UserStore").getCurrentUser().id;
       patches.push(
         after("getUserProfile", Profiles, ([id], profile) => {
-          if (id === myId && profile) {
+          if (String(id) === String(myId) && profile) {
             const extra = CONFIG.badges.map((b, i) => ({
               id: b.id || "fake_" + i,
               description: b.description,
@@ -170,7 +170,7 @@ exports.default = {
       if (mod?.default) {
         patches.push(
           after("default", mod, ([user], res) => {
-            if (user?.userId === myId || user?.id === myId) {
+            if (String(user?.userId ?? user?.id) === String(myId)) {
               const extra = CONFIG.badges.map((b, i) => ({
                 id: b.id || "fake_" + i,
                 description: b.description,
