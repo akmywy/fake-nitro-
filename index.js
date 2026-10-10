@@ -14,6 +14,12 @@ const CONFIG = {
   emojiSize: 48,
   profileTheme: [0x5865f2, 0xeb459e], // [primary, accent] hex, local ghir
   nicknameStyle: "bold", // "bold" | "script" | "mono" | "none"
+  memberSince: "2015-05-15T00:00:00Z",
+  fakeDeafen: true,
+  // 7ot hna badges: icon = URL dyal tswira
+  badges: [
+    // { description: "My badge", icon: "https://example.com/badge.png" },
+  ],
 };
 
 // ---- Nickname style (unicode, kayban l kolchi) ----
@@ -136,6 +142,60 @@ exports.default = {
           });
         })
       );
+    });
+
+    // 8) Badges fake (ghir kayban lik)
+    safe("badges", () => {
+      const Profiles = findByStoreName("UserProfileStore");
+      const myId = findByStoreName("UserStore").getCurrentUser().id;
+      patches.push(
+        after("getUserProfile", Profiles, ([id], profile) => {
+          if (id === myId && profile) {
+            const extra = CONFIG.badges.map((b, i) => ({
+              id: "fake_" + i,
+              description: b.description,
+              icon: b.icon, // hash dyal Discord wla URL kaml
+            }));
+            profile.badges = [...(profile.badges || []), ...extra];
+          }
+          return profile;
+        })
+      );
+    });
+
+    // 9) Member Since fake (2015)
+    safe("member-since", () => {
+      const me = findByStoreName("UserStore").getCurrentUser();
+      const fake = new Date(CONFIG.memberSince);
+      Object.defineProperty(me, "createdAt", { value: fake, configurable: true });
+      const Snow = findByProps("extractTimestamp");
+      if (Snow) {
+        patches.push(
+          instead("extractTimestamp", Snow, (args, orig) =>
+            args[0] === me.id ? fake.getTime() : orig(...args)
+          )
+        );
+      }
+    });
+
+    // 10) Fake deafen: mnin t-mute, l-nass kaychoufok deafen w nta kat-sme3
+    safe("fake-deafen", () => {
+      const targets = [
+        findByProps("voiceStateUpdate"),
+        findByProps("updateVoiceState"),
+      ].filter(Boolean);
+      for (const t of targets) {
+        const fn = t.voiceStateUpdate ? "voiceStateUpdate" : "updateVoiceState";
+        patches.push(
+          before(fn, t, (args) => {
+            const s = args[0];
+            if (CONFIG.fakeDeafen && s && (s.selfMute || s.self_mute)) {
+              s.selfDeaf = true;
+              s.self_deaf = true;
+            }
+          })
+        );
+      }
     });
   },
 
